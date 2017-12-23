@@ -94,7 +94,6 @@
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER,1);
 		curl_setopt($ch, CURLOPT_COOKIEFILE, "safetree.cookie");
 		$getdata = curl_exec($ch);
-		echo " Finished!" . "\n";
 	}
 	error_reporting(0);
 	//你需要把高三学生的用户名放入gaosan.txt中，然后执行php safetree.php。
