@@ -112,8 +112,33 @@
 		if ($retry == 4) return false;
 		else return true;
 	}
+	function _xmsafetreetopicsign($schoolYear,$semester,$specialId) {
+		//完成观看验证
+		$ch = curl_init();
+		curl_setopt($ch, CURLOPT_URL, 'https://xiamen.safetree.com.cn/Topic/topic/platformapi/api/v2/Holiday/sign?callback=&schoolYear=' . $schoolYear . '&semester=' . $semester . '&step=1&specialId='. $specialId .'&prvName=&cityName=&_='.sprintf("%d",microtime(true)*1000));
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER,1);
+		curl_setopt($ch, CURLOPT_COOKIEFILE, "safetree.cookie");
+		$getdata = curl_exec($ch);
+		if (curl_getinfo($ch,CURLINFO_HTTP_CODE) != 200) return false;
+		//提交第二步(居然不交答卷直接调用完成API就行)
+		$ch = curl_init();
+		curl_setopt($ch, CURLOPT_URL, 'https://xiamen.safetree.com.cn/Topic/topic/platformapi/api/v2/Holiday/sign?callback=&schoolYear=' . $schoolYear . '&semester=' . $semester . '&step=2&specialId='. $specialId .'&prvName=&cityName=&_='.sprintf("%d",microtime(true)*1000));
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER,1);
+		curl_setopt($ch, CURLOPT_COOKIEFILE, "safetree.cookie");
+		$getdata = curl_exec($ch);
+		if (curl_getinfo($ch,CURLINFO_HTTP_CODE) != 200) return false;
+		return true;
+	}
+	function xmsafetreetopicsign($schoolYear,$semester,$specialId) {
+		for ($retry = 1;$retry <= 3;$retry ++) {
+			$stat = _xmsafetreetopicsign($schoolYear,$semester,$specialId);
+			if ($stat) break;
+		}
+		if ($retry == 4) return false;
+		else return true;
+	}
 	error_reporting(0);
-	//你需要把高三学生的用户名放入gaosan.txt中，然后执行php safetree.php。
+	//你需要把学生的用户名放入acc.txt中，然后执行php safetree.php。
 	//注意：多线程执行时请确保文件在不同文件夹内。该脚本会写入运行目录下的safetree.cookie，将产生干扰。
 	$file = file_get_contents('acc.txt');
 	$file = explode("\n",$file);
@@ -125,11 +150,13 @@
 		$stat = false;
 		if (xmsafetreelogin($username,'123456')) {
 			$stat = true;
-			xmsafetreezhuantihuodong('141');
+			$stat &= xmsafetreetopicsign('2018','1','132');
+			/*
 			$stat &= xmsafetreeanquanzuoye('809','822');
 			$stat &= xmsafetreeanquanzuoye('809','821');
 			$stat &= xmsafetreeanquanzuoye('809','815');
 			$stat &= xmsafetreeanquanzuoye('809','814');
+			*/
 		}
 		if ($stat) echo "OK\n";
 		else {
