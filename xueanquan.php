@@ -48,6 +48,32 @@
 		if ($retry == 4) return false;
 		else return true;
 	}
+	function _xmsafetreeholidaysign($sportYear,$semester) {
+		$CurrentTime = explode(" ",microtime(false));
+		//完成观看验证
+		$ch = curl_init();
+		curl_setopt($ch, CURLOPT_URL, 'https://xiamen.xueanquan.com/WebApi/Holiday/FinishWork?jsoncallback=&r='.$CurrentTime[0].'&sportYear='.$sportYear.'&semester='. $semester .'&workStep=1&_='.sprintf("%d",microtime(true)*1000));
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER,1);
+		curl_setopt($ch, CURLOPT_COOKIEFILE, $GLOBALS['cookie']);
+		$getdata = curl_exec($ch);
+		if (curl_getinfo($ch,CURLINFO_HTTP_CODE) != 200) return false;
+		//提交第二步(居然不交答卷直接调用完成API就行)
+		$ch = curl_init();
+		curl_setopt($ch, CURLOPT_URL, 'https://xiamen.xueanquan.com/WebApi/Holiday/FinishWork?jsoncallback=&r='.$CurrentTime[0].'&sportYear='.$sportYear.'&semester='. $semester .'&workStep=2&_='.sprintf("%d",microtime(true)*1000));
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER,1);
+		curl_setopt($ch, CURLOPT_COOKIEFILE, $GLOBALS['cookie']);
+		$getdata = curl_exec($ch);
+		if (curl_getinfo($ch,CURLINFO_HTTP_CODE) != 200) return false;
+		return true;
+	}
+	function xmsafetreeholidaysign($sportYear,$semester) {
+		for ($retry = 1;$retry <= 3;$retry ++) {
+			$stat = _xmsafetreeholidaysign($sportYear,$semester);
+			if ($stat) break;
+		}
+		if ($retry == 4) return false;
+		else return true;
+	}
 	function _xmsafetreemobilelogin() {
 		$ch = curl_init();
 		curl_setopt($ch, CURLOPT_URL, 'https://xiamen.xueanquan.com/safeapph5/api/safeEduCardinalData/activeUser?uderId=-1&_='.sprintf("%d",microtime(true)*1000));
@@ -65,6 +91,7 @@
 		if ($retry == 4) return false;
 		else return true;
 	}
+
 	error_reporting(0);
 	$GLOBALS['cookie'] = md5(microtime(true)).'.cookie';
 	if (empty($argv[1])) $accfile = 'acc.txt';
@@ -81,7 +108,7 @@
 		//var_dump($userinfo);
 		if (!($userinfo === false)) {
 			$stat = true;
-			xmsafetreemobilelogin();
+			xmsafetreeholidaysign('2018','2');
 		}
 		if ($stat) echo "OK\n";
 		else {
