@@ -1,4 +1,9 @@
 <?php
+	function trimstring($str) {
+		$lpos = strpos($str,'"');
+		$rpos = strrpos($str,'"');
+		return substr($str,$lpos+1,$rpos-$lpos-1);
+	}
 	function json_prepare($str) {
 		if(preg_match('/\w:/', $str)) $str = preg_replace('/(\w+):/is', '"$1":', $str);
 		$str = str_replace('(','',$str);
@@ -74,6 +79,70 @@
 		if ($retry == 4) return false;
 		else return true;
 	}
+	function _xmsafetreeanquanzuoye($gid,$li) {
+		//获取视频信息
+		$ch = curl_init();
+		curl_setopt($ch,CURLOPT_URL,'https://xiamen.xueanquan.com/JiaTing/EscapeSkill/SeeVideo.aspx?gid=' . $gid . '&li=' . $li);
+		curl_setopt($ch,CURLOPT_RETURNTRANSFER,1);
+		curl_setopt($ch,CURLOPT_COOKIEFILE,$GLOBALS['cookie']);
+		$htmldata = curl_exec($ch);
+		//假装看了视频 {
+		$ch = curl_init();
+		curl_setopt($ch,CURLOPT_URL, 'https://xiamen.xueanquan.com/jiating/ajax/FamilyEduCenter.EscapeSkill.SeeVideo,FamilyEduCenter.ashx?_method=SkillCheckName&_session=rw');
+		curl_setopt($ch,CURLOPT_RETURNTRANSFER,1);
+		curl_setopt($ch,CURLOPT_POST,1);
+		$lpos = strpos($htmldata,'SeeVideo.SkillCheckName(');
+		$rpos = strpos(substr($htmldata,$lpos+24),')');
+		$data = explode(',',substr($htmldata,$lpos+24,$rpos));
+		$postdata = 
+			'videoid=' . trimstring($data[0]) . "\r\n" .
+			'gradeid=' . trimstring($data[1]) . "\r\n" .
+			'courseid=' . trimstring($data[2]) . "\r\n"
+			;
+		curl_setopt($ch,CURLOPT_POSTFIELDS,$postdata);
+		curl_setopt($ch,CURLOPT_HTTPHEADER,array('Content-Type: text/plain;charset=UTF-8','Referer: https://xiamen.xueanquan.com/JiaTing/EscapeSkill/SeeVideo.aspx?gid=' . $gid .'&li=' . $li,'Origin: https://xiamen.xueanquan.com',)); 
+		curl_setopt($ch,CURLOPT_COOKIEFILE,$GLOBALS['cookie']);
+		$getdata = curl_exec($ch);
+		//假装看了视频 }
+		//提交答案
+		$ch = curl_init();
+		curl_setopt($ch,CURLOPT_URL, 'https://xiamen.xueanquan.com/jiating/ajax/FamilyEduCenter.EscapeSkill.SeeVideo,FamilyEduCenter.ashx?_method=TemplateIn2&_session=rw');
+		curl_setopt($ch,CURLOPT_RETURNTRANSFER,1);
+		curl_setopt($ch,CURLOPT_POST,1);
+		$lpos = strpos($htmldata,'res = SeeVideo.TemplateIn2(');
+		$rpos = strpos($htmldata,' ).value;');
+		$data = explode(',',substr($htmldata,$lpos+27,$rpos-$lpos-27));
+		//var_dump($data);
+		$postdata = 
+			'workid='      . trimstring($data[0]) . "\r\n" .
+			'fid='         . trimstring($data[1]) . "\r\n" .
+			'title='       . trimstring($data[2]) . "\r\n" .
+			'require='     . "\r\n" .
+			'purpose='     . "\r\n" .
+			'contents='    . "\r\n" .
+			'testwanser='  . '0|0|0' . "\r\n" .
+			'testinfo='    . '已掌握技能' . "\r\n" .
+			'testMark='    . '100' . "\r\n" .
+			'testReulst='  . '1' . "\r\n" .
+			'SiteName='    . "\r\n" .
+			'siteAddrees=' . "\r\n" .
+			'watchTime='   . "\r\n" .
+			'CourseID='    . trimstring($data[13]) . "\r\n"
+			;
+		curl_setopt($ch,CURLOPT_POSTFIELDS,$postdata); 
+		curl_setopt($ch,CURLOPT_HTTPHEADER,array('Content-Type: text/plain;charset=UTF-8','Referer: https://xiamen.xueanquan.com/JiaTing/EscapeSkill/SeeVideo.aspx?gid=' . $gid .'&li=' . $li,'Origin: https://xiamen.xueanquan.com',)); 
+		curl_setopt($ch, CURLOPT_COOKIEFILE, $GLOBALS['cookie']);
+		$getdata = curl_exec($ch);
+		return $getdata;
+	}
+	function xmsafetreeanquanzuoye($gid,$li) {
+		for ($retry = 1;$retry <= 3;$retry ++) {
+			$stat = _xmsafetreeanquanzuoye($gid,$li);
+			if ($stat == "'1'" || $stat == "'4'") break;
+		}
+		if ($retry == 4) return false;
+		else return true;
+	}
 	function _xmsafetreemobilelogin() {
 		$ch = curl_init();
 		curl_setopt($ch, CURLOPT_URL, 'https://xiamen.xueanquan.com/safeapph5/api/safeEduCardinalData/activeUser?uderId=-1&_='.sprintf("%d",microtime(true)*1000));
@@ -91,7 +160,6 @@
 		if ($retry == 4) return false;
 		else return true;
 	}
-
 	error_reporting(0);
 	$GLOBALS['cookie'] = md5(microtime(true)).'.cookie';
 	if (empty($argv[1])) $accfile = 'acc.txt';
@@ -108,7 +176,12 @@
 		//var_dump($userinfo);
 		if (!($userinfo === false)) {
 			$stat = true;
-			xmsafetreeholidaysign('2018','2');
+			
+			xmsafetreeanquanzuoye('832','1350');
+			xmsafetreeanquanzuoye('832','1351');
+			xmsafetreeanquanzuoye('832','1355');
+			xmsafetreeanquanzuoye('832','1356');
+			xmsafetreetopicsign('235');
 		}
 		if ($stat) echo "OK\n";
 		else {
